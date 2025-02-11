@@ -193,23 +193,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             Reset();
             m_Value = _value;
             m_BestValue = m_Value;
-
-            //  song2201 레이스 시작시 기존 완료 정보 초기화 위해 기존 완료 정보 유지하던 코드 주석처리
-            //if (!IsCompletedCheckEnd())
-            //{
-            //    m_Value = _value;
-
-            //    int nLength = m_arrayCompleted.Length - 1;
-            //    for (int i = nLength; i >= 0; --i)
-            //    {
-            //        if (m_arrayCompleted[nLength - i])
-            //            m_Value = m_GoalValueList[i];
-            //    }
-
-            //    m_bCheckEnd = false;
-            //}
-            //else
-            //    m_bCheckEnd = true;
         }
 
         protected bool SetValue(T _value, bool _bSetForced = false)
@@ -653,13 +636,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
                     listPlayer.Add(i);
                 data.SetPlayerList(nMine, listPlayer);
             }
-        }
-        else if (m_ConditionList.TryGetValue(ConditionType.TIME_LIMITED_SUDDENDEATH, out condition))
-        {
-            //cCareerConditionData data = CastingConditionDataClassFromType(condition.Key, condition.Value);
-            //List<int> goalValueList = new List<int>();
-            //goalValueList.Add(1); goalValueList.Add(1); goalValueList.Add(1);
-            //data.SetGoalValueList(goalValueList);
         }
     }
 
@@ -1527,27 +1503,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
                     }
                 }
                 break;
-
-            //case ConditionType.GRAND_PRIX:
-            //    {
-            //        if (ZpGameGlobals.m_ScriptGM && !ZpGameGlobals.m_ScriptGM.IsPause())
-            //            bComplete = _Condition.IsComplete();
-
-            //        cCareerGrandPrixConditionData grandPrixData = _Condition as cCareerGrandPrixConditionData;
-            //        if (grandPrixData == null)
-            //            return string.Empty;
-
-            //        int nGoal = 0;
-            //        List<int> goalList = _Condition.GetGoalValueList() as List<int>;
-            //        if (goalList.Count > 0)
-            //            nGoal = goalList[goalList.Count - 1];
-
-            //        nValue = Mathf.Min(nGoal, grandPrixData.GetResult());
-
-            //        stringBuilder.Append(string.Format(" ({0}", nValue));
-            //        stringBuilder.Append(string.Format("/{0})", nGoal));
-            //    }
-            //    break;
 
             default:
                 {

@@ -416,30 +416,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             ZpCareerManager.GetStageWithIndex(_nEpisodStage));
     }
 
-    public void ShowDailyLimitedStagePlayCountPurchasePopup(int _nEpisodStage)
-    {
-        string strMoney = ZpUIHelper.GetValueToCommaNumber(
-            ZpGlobals.s_ScriptCSVDataPool.IfConstValueInfo.GetValue("Career_Daily_Play_Price"));
-        string strMessage = string.Format(ZpGlobalText.Instance.GetString(
-            "Career_DailyStage_Purchase_PlayCount_Message"), strMoney);
-
-        ZpPopupDialogBase.m_bForceStartClickPos = true;
-        GameObject popup = ZpGlobals.GlobalGUI.CreateDialog(ZpGlobalGUI.DialogType.MessageBoxYesOrNo,
-            "PurchaseDailyLimitedStagePlayCount", "",
-            strMessage, ZpGlobalText.Instance.GetString("Career_DailyStage_Purchase_PlayCount_Title"),
-            new ZpParameter(new object[] { _nEpisodStage }));
-        if (popup != null)
-        {
-            ZpMessageBox messageBox = popup.GetComponent<ZpMessageBox>();
-            if (messageBox != null)
-            {
-                messageBox.SetMessageBoxOption(
-                    new ZpMessageBox.MessageBoxOption(false, true, false, false, true, null, null,
-                        null, ZpUtility.ConvertToString(ZpMessageBox.ICON_NAME.icon_star_up), null, strMoney));
-            }
-        }
-    }
-
     void PurchaseDailyLimitedStagePlayCount(ZpParameter _param)
     {
         if (ZpGlobals.UsingNetwork)
@@ -524,73 +500,7 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
         }
     }
 
-    public bool IsPossiblePlayPlayCountLimitedStage(int _nEpisod, int _nStage)
-    {
-        cCareerEpisodResult episodResult;
-        if (_nEpisod <= LastOpenEpisod && GetCareerEpisodResult(_nEpisod, out episodResult))
-        {
-            if (IsHiddenStage(_nStage) == true)
-                return episodResult.bOpenedHidden == true && episodResult.IsPossiblePlayCountLimitedStage(_nStage) == true;
-            else
-                return episodResult.IsPossiblePlayCountLimitedStage(_nStage) == true;
-        }
-        return false;
-    }
-
-    public bool IsPossiblePlayPlayCountLimitedStage(int _nEpisodStage)
-    {
-        return IsPossiblePlayPlayCountLimitedStage(ZpCareerManager.GetEpisodWithIndex(_nEpisodStage),
-            ZpCareerManager.GetStageWithIndex(_nEpisodStage));
-    }
-
-    public string GetPlayCountLimitedStagePlayCountString(int _nEpisod, int _nStage)
-    {
-        if (_nEpisod <= LastOpenEpisod)
-        {
-            cCareerPlayCountLimitedStageResult limitedStage = GetPlayCountLimitedStageResult(_nEpisod, _nStage);
-            if (limitedStage != null)
-            {
-                string strCount = string.Format(ZpGlobals.s_ScriptCSVGlobalText.GetString("Count_TotalCount"),
-                    limitedStage.GetPossiblePlayCount, limitedStage.GetLimitedCount);
-                if (limitedStage.IsPossiblePlay() == false)
-                    strCount = strCount.Insert(0, "[FF0000]");
-                return strCount;
-            }
-        }
-        else
-        {
-            return string.Format(ZpGlobals.s_ScriptCSVGlobalText.GetString("Count_TotalCount"),
-                0, ZpGlobals.s_ScriptCSVDataPool.IfConstValueInfo.GetValue("Career_Daily_Play_Limited_Count")).Insert(0, "[FF0000]");
-        }
-
-        return string.Empty;
-    }
-
-    public string GetPlayCountLimitedStagePlayCountString(int _nEpisodStage)
-    {
-        return GetPlayCountLimitedStagePlayCountString(ZpCareerManager.GetEpisodWithIndex(_nEpisodStage),
-            ZpCareerManager.GetStageWithIndex(_nEpisodStage));
-    }
-
 #endregion
-
-    public bool UpdateCareerResult(float _fLapTime)
-    {
-        return UpdateCareerResult(m_nCurrentPlayEpisodStage, _fLapTime);
-    }
-
-    public bool UpdateCareerResult(int _nEpisod, int _nStage, float _fLapTime)
-    {
-        return UpdateCareerResult(ZpCareerManager.GetEpisodStageWithIndex(_nEpisod, _nStage), _fLapTime);
-    }
-
-    public bool UpdateCareerResult(int _nEpisodStage, float _fLapTime)
-    {
-        SaveLocalDataCareerModeGuideShowCount();
-        if (_nEpisodStage == CurrentPlayEpisodStage && _fLapTime != Mathf.Infinity)
-            return UpdateCurrentPlayCareerRank();
-        return false;
-    }
 
     public bool UpdateCurrentPlayCareerRank()
     {
@@ -619,8 +529,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             UpdateConditionMinimumDesc(type, true, bCompleted);
         }
 
-        //if (stageResult.ownRank < nCurrentRank)
-        //{
         bool[] arrayCompleted = GetCurrentCareerResultCompletedList();
         CurrentPlayStagePrevRank = stageResult.ownRank;
         stageResult.UpdateCompletedCondition(arrayCompleted);
@@ -633,41 +541,8 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
 
         SetCareerStageResult(CurrentPlayEpisodStage, stageResult);
 		SetShowNextStage(stageResult);
-        //#if UNITY_EDITOR
-        //            ZpLog.Normal(ZpLog.E_Category.Careeer, "@@ Update Career current Rank : " + nCurrentRank.ToString());
-        //#endif
-        //        }
-        //#if UNITY_EDITOR
-        //        else
-        //            ZpLog.Normal(ZpLog.E_Category.Careeer, "@@ Update Career current Rank : Update failed");
-        //#endif
 
         return true;
-    }
-
-    public void AddCareerRank()
-    {
-        m_nTestRank = Mathf.Clamp(++m_nTestRank, RANK_MIN, RANK_MAX);
-    }
-
-    public bool GetCareerEpisodResult(int _nEpisod, out cCareerEpisodResult _episodResult)
-    {
-        return m_Result.TryGetValue(_nEpisod, out _episodResult);
-    }
-
-    public bool GetCareerStageResult(int _nEpisod, int _nStage, out cCareerStageResult _StageResult)
-    {
-        cCareerEpisodResult result;
-        if (GetCareerEpisodResult(_nEpisod, out result))
-            return result.stageResultList.TryGetValue(_nStage, out _StageResult);
-
-        _StageResult = new cCareerStageResult();
-        return false;
-    }
-
-    public bool GetCareerStageResult(int _nEpisodStage, out cCareerStageResult _StageResult)
-    {
-        return GetCareerStageResult(GetEpisodWithIndex(_nEpisodStage), GetStageWithIndex(_nEpisodStage), out _StageResult);
     }
 
     void SetCareerStageResult(int _nEpisod, int _nStage, cCareerStageResult _StageResult)
@@ -679,40 +554,16 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             if (episodResult.stageResultList.TryGetValue(_nStage, out stageResult) == true)
             {
                 stageResult = _StageResult;
-
-#if UNITY_EDITOR
-                ZpLog.Normal(ZpLog.E_Category.Careeer, "Update stage result - " + GetEpisodStageWithIndex(_nEpisod, _nStage));
-#endif
             }
             else
             {
                 episodResult.AddStage(_nStage, _StageResult);
-
-#if UNITY_EDITOR
-                ZpLog.Normal(ZpLog.E_Category.Careeer, "New open stage - " + GetEpisodStageWithIndex(_nEpisod, _nStage));
-#endif
-            }
-
-            //  favor stage open check
-            if (MaxEpisodCount > LastOpenEpisod && IsPossibleOpenNewStage() == true && (IsFavorStage(_StageResult.stage) == true ||
-                (IsBossStage(_StageResult.stage) == true && _StageResult.ownRank > RANK_MIN)))
-            {
-                //if (ZpGlobals.UsingNetwork == true)
-                //    ZpGlobals.Network.SendTCP_CareerModeAbleOpenEpisodRemainTime();
-
-#if UNITY_EDITOR
-                ZpLog.Normal(ZpLog.E_Category.Careeer, "Update stage result - Open favor stage");
-#endif
             }
 
             //	hidden stage open check
             if (IsHiddenStage(_StageResult.stage) == true)
             {
                 episodResult.bPlayHidden = false;
-
-#if UNITY_EDITOR
-                ZpLog.Normal(ZpLog.E_Category.Careeer, "Update stage result - Open hidden stage");
-#endif
             }
             else
             {
@@ -738,73 +589,11 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             }
             else
                 SetShowNextStage(GetEpisodStageWithIndex(_nEpisod, _nStage));
-
-#if UNITY_EDITOR
-            ZpLog.Normal(ZpLog.E_Category.Careeer, "New open episod - " + GetEpisodStageWithIndex(_nEpisod, _nStage));
-#endif
         }
-    }
-
-    void SetCareerStageResult(KMCareerStageInfo _StageResult)
-    {
-        bool bPlayCountLimitedStage = IsPlayCountLimitedStage(GetStageWithIndex(_StageResult.StageNumber));
-        cCareerStageResult stageResult = bPlayCountLimitedStage == false ? new cCareerStageResult(_StageResult) :
-            CreatePlayCountLimitedStageResult(_StageResult,
-            CreatePlayCountLimitedStagePlayCount(GetStageWithIndex(_StageResult.StageNumber)));
-        SetCareerStageResult(_StageResult.StageNumber, stageResult);
-    }
-
-    void SetCareerStageResult(int _nEpisodStage, cCareerStageResult _StageResult)
-    {
-        SetCareerStageResult(GetEpisodWithIndex(_nEpisodStage), GetStageWithIndex(_nEpisodStage), _StageResult);
-    }
-
-    public void SetCareerOpenedHiddenStage(int _nEpisod, bool _bOpened)
-    {
-        cCareerEpisodResult episodResult;
-        if (GetCareerEpisodResult(_nEpisod, out episodResult))
-            episodResult.bOpenedHidden = _bOpened;
-    }
-
-    public void SetCareerOpenedFavorStage(int _nEpisod, bool _bOpened)
-    {
-        cCareerEpisodResult episodResult;
-        if (GetCareerEpisodResult(_nEpisod, out episodResult))
-            episodResult.bOpenedFavor = _bOpened;
-    }
-
-    public int GetCareerStageMyRank(int _nEpisod, int _nStage)
-    {
-        cCareerStageResult stageResult;
-        if (GetCareerStageResult(_nEpisod, _nStage, out stageResult) == true)
-            return Mathf.Clamp(stageResult.ownRank, RANK_MIN, RANK_MAX);
-        return RANK_MIN;
-    }
-
-    public int GetCareerStageMyRank(int _nEpisodStage)
-    {
-        return GetCareerStageMyRank(GetEpisodWithIndex(_nEpisodStage), GetStageWithIndex(_nEpisodStage));
-    }
-
-    public int GetCareerStageMyRank()
-    {
-        return GetCareerStageMyRank(CurrentPlayEpisodStage);
     }
 
     public void UpdateAllCareerStageResultInfo(PacketCSRsCareerEpisodeMap _stagesInfo)
     {
-        //if (ZpUITest.m_sbCareerTest)
-        //{
-        //    _arrayStageInfo = new KMCareerStageInfo[ZpUITest.m_sConditionValue[0]];
-        //    for (int i = 0; i < _arrayStageInfo.Length; ++i)
-        //    {
-        //        int nEpi = i / (int)StageType.HIDDEN + 1;
-        //        int nStage = i % (int)StageType.HIDDEN + 1;
-        //        _arrayStageInfo[i] = new KMCareerStageInfo((short)ZpCareerManager.GetEpisodStageWithIndex(nEpi, nStage),
-        //            (byte)ZpUITest.m_sConditionValue[1]);
-        //    }
-        //}        
-
         KMCareerStageInfo[] arrayStageInfo = _stagesInfo.stageInfo;
         KMDailyStageInfo[] arrayPlayCountLimitedStageInfo = _stagesInfo.DailyStageList;
         MaxEpisodCount = GetCareerInfo.GetEpisodTotalCount();
@@ -969,83 +758,6 @@ public partial class ZpCareerManager : ZpSingleton<ZpCareerManager>
             }
 
             m_Result.Add(nEpisod, episodResult);
-        }
-
-        //  tutorial stage
-        //if (ZpGlobals.PlayerM.IsAblePlayTutorial(KMTutorialType.CAREER_MODE_TUTORIAL) == true)
-        //{
-        //    nEpisod = 1;
-        //    LastOpenEpisodStage = ZpTutorial_CAREERMODE.TUTORIAL_STAGE;
-
-        //    cCareerStageResult stageResult = new cCareerStageResult();
-        //    stageResult.stage = GetStageWithIndex(ZpTutorial_CAREERMODE.TUTORIAL_STAGE);
-        //    stageResult.ownRank = RANK_MIN;
-
-        //    cCareerEpisodResult epiResult;
-        //    if (GetCareerEpisodResult(nEpisod, out epiResult) == false)
-        //    {
-        //        epiResult = new cCareerEpisodResult(nEpisod);
-        //        m_Result.Add(nEpisod, epiResult);
-        //    }
-
-        //    epiResult.AddStage(stageResult.stage, stageResult);
-
-        //    cCareerPlayCountLimitedStageResult stage = CreatePlayCountLimitedStageResult(nEpisod, (int)StageType.DAILY_LIMITED,
-        //        CreatePlayCountLimitedStagePlayCount((int)StageType.DAILY_LIMITED));
-        //    if (stage != null)
-        //        epiResult.AddStage((int)StageType.DAILY_LIMITED, stage);
-        //    if (arrayPlayCountLimitedStageInfo != null && arrayPlayCountLimitedStageInfo.Length > 0)
-        //    {
-        //        KMDailyStageInfo limitStageInfo = arrayPlayCountLimitedStageInfo[0];
-        //        epiResult.SetPossiblePlayCountFromServer(GetStageWithIndex(limitStageInfo.StageNumber), limitStageInfo.RemainCount);
-        //    }
-        //}
-    }
-
-    public KMCareerStageInfo[] GetCreateStageInfo(int _nEpisodStage)
-    {
-        KMCareerStageInfo[] arrayStageInfo = new KMCareerStageInfo[1] { new KMCareerStageInfo() };
-        arrayStageInfo[0].StageNumber = (short)_nEpisodStage;
-        arrayStageInfo[0].Complete = new bool[GetCareerInfo.GetConditionListCount(_nEpisodStage)];
-        return arrayStageInfo;
-    }
-
-    public void AddNewOpenStage(KMCareerStageInfo[] _arrayStageInfo)
-    {
-        if (_arrayStageInfo == null || _arrayStageInfo.Length < 1 || m_Result == null)
-            return;
-
-        bool bFavor = false;
-        bool bHidden = false;
-        for (int i = 0 ; i < _arrayStageInfo.Length ; ++i)
-        {
-            KMCareerStageInfo stageInfo = _arrayStageInfo[i];
-            SetCareerStageResult(stageInfo);
-
-            if (bFavor == false)
-                bFavor = IsFavorStage(GetStageWithIndex(stageInfo.StageNumber));
-            if (bHidden == false)
-                bHidden = IsHiddenStage(GetStageWithIndex(stageInfo.StageNumber));
-        }
-
-        //  set show next stage
-        if (IsPrevPlayedCareerModeGame() == true)
-        {
-            if (bFavor == true)
-            {
-                for (int i = 0 ; i < _arrayStageInfo.Length ; ++i)
-                {
-                    KMCareerStageInfo stageInfo = _arrayStageInfo[i];
-                    if (IsFavorStage(GetStageWithIndex(stageInfo.StageNumber)) == true &&
-                        IsPossiblePlayPlayCountLimitedStage(GetEpisodWithIndex(stageInfo.StageNumber), (int)StageType.HIDDEN) == false)
-                    {
-                        SetShowNextStage(stageInfo.StageNumber, true);
-                        break;
-                    }
-                }
-            }
-            else if (bHidden == true)
-                SetShowNextStage(GetEpisodStageWithIndex(CurrentPlayEpisod, (int)StageType.HIDDEN), true);
         }
     }
 }
